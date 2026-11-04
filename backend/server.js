@@ -104,7 +104,7 @@ app.get('/api/profile', async (req, res) => {
   } catch (error) { res.status(500).json({ error: error.message }); }
 });
 
-const STRATEGY_SERVICE_URL = 'http://127.0.0.1:8080/analyze';
+const STRATEGY_SERVICE_URL = process.env.STRATEGY_SERVICE_URL || 'http://127.0.0.1:8080/analyze';
 
 app.get('/api/signal', async (req, res) => {
   try {

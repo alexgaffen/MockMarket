@@ -5,11 +5,28 @@
 #include <sstream>
 #include <cmath>
 #include <numeric>
+
+// Winsock on Windows (local dev), POSIX sockets everywhere else (the Docker image).
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include "json.hpp"
-
 #pragma comment(lib, "ws2_32.lib")
+#else
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+using SOCKET = int;
+const SOCKET INVALID_SOCKET = -1;
+inline int closesocket(SOCKET s) { return close(s); }
+#endif
+
+// A vendored json.hpp next to this file if present, else the system package (nlohmann-json3-dev).
+#if __has_include("json.hpp")
+#include "json.hpp"
+#else
+#include <nlohmann/json.hpp>
+#endif
 
 using json = nlohmann::json;
 
@@ -88,12 +105,19 @@ public:
 };
 
 int main() {
+#ifdef _WIN32
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
     SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-    sockaddr_in serverAddr;
+    sockaddr_in serverAddr{};
     serverAddr.sin_family = AF_INET;
+#ifdef _WIN32
     serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+#else
+    // In a container the API reaches us over the Compose network, so listen on all interfaces.
+    serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+#endif
     serverAddr.sin_port = htons(8080);
     bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr));
     listen(serverSocket, SOMAXCONN);
@@ -134,6 +158,8 @@ int main() {
         }
         closesocket(clientSocket);
     }
+#ifdef _WIN32
     WSACleanup();
+#endif
     return 0;
 }

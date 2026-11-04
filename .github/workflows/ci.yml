@@ -12,19 +12,11 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build C++ Service
-        working-directory: ./cpp-algos
-        run: docker build -t cpp-algos-test .
-
-      - name: Build Backend
-        working-directory: ./backend
-        run: docker build -t backend-test .
-
-      - name: Build Frontend
-        working-directory: ./frontend
-        run: docker build -t frontend-test .
+      # Builds every image exactly as docker-compose.yml defines them.
+      - name: Build all services
+        run: docker compose build

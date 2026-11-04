@@ -53,7 +53,7 @@ mock-market/
 
 ## ⚙️ Prerequisites
 
-* **Node.js** (v16 or higher)
+* **Node.js** (v22 or higher)
 * **C++ Compiler** (MinGW for Windows or GCC/Clang for Linux/macOS)
 * **Docker Desktop** (recommended for easy deployment)
 * **API Keys:**
@@ -64,17 +64,14 @@ mock-market/
 
 ### Method 1: Docker (Recommended)
 
-> **Note:** The current C++ code uses `winsock2.h`. For Docker (Linux containers), refactor socket code to standard BSD sockets (`<sys/socket.h>`, `<netinet/in.h>`).
-
 1. **Clone the repository:**
    ```bash
    git clone [https://github.com/yourusername/mock-market.git](https://github.com/yourusername/mock-market.git)
    cd mock-market
    ```
 
-2. **Create `.env` in the `backend/` directory:**
+2. **Create `.env` in the repository root** (Compose passes it to the backend; it is git-ignored and never copied into an image):
    ```env
-   PORT=5000
    FINNHUB_API_KEY=your_finnhub_key_here
    GEMINI_API_KEY=your_gemini_key_here
    ```
@@ -132,9 +129,9 @@ When a user searches for a stock (e.g., AAPL):
 
 ## 🚧 Cross-Platform Note
 
-Current `cpp-algos/src/main.cpp` uses `<winsock2.h>` → **Windows-only**.
-* To run inside Docker (Linux): replace with standard POSIX sockets.
-* Local Windows development works out-of-the-box.
+`cpp-algos/src/main.cpp` uses Winsock on Windows and POSIX sockets everywhere else, so the same file builds natively on Windows and inside the Linux Docker image.
+* For a native build, keep a copy of [`json.hpp`](https://github.com/nlohmann/json/releases) next to `main.cpp` (it is git-ignored); the Docker image uses the system `nlohmann-json3-dev` package instead.
+* CI (`.github/workflows/ci.yml`) runs `docker compose build` on every push and pull request to `main`.
 
 ## 🤝 Contributing
 
